@@ -3,15 +3,21 @@ var fs = require('fs');
 let jsdom = require('jsdom');
 let JSDOM = jsdom.JSDOM;
 let babel = require("babel-core");
+let CleanCSS = require('clean-css');
 
 let usage = `usage:
-	minifyfromhtml -o <output dir> < <input file>
+	minifyfromhtml --js=<output js file> --css=<output css file> < <input file>
 
 	the minification process uses babel under the hood, so you can modify
 	the minification with a .babelrc file.
+	https://babeljs.io/
+
+	the css minification process uses clean-css, so you can modify
+	the minification with
+	https://github.com/jakubpawlowicz/clean-css
 
 	example:
-	minifyfromhtml -o dist < example/index.html
+	minifyfromhtml --js=dist/mywidget.min.js --css=dist/mywidget.min.css < example/index.html
 `;
 
 let outputDir = argv.o;
@@ -21,7 +27,7 @@ if (argv.h) {
 	return;
 }
 
-if (!argv.o) {
+if (!argv.js || !argv.css) {
 	console.log(usage);
 	return;
 }
@@ -72,17 +78,29 @@ readStdin(function(html) {
 				//write scripts
 
 				//clear out dist file
-				fs.writeFileSync(outputDir + '/dist.js', '');
+				fs.writeFileSync(argv.js, '');
 
 				//write files
 				for (let i = 0; i < scripts.length; i++) {
 					const script = scripts[i];
 
-					fs.appendFileSync(outputDir + '/dist.js', processedScripts[script] + '\n');
+					console.log(script + ' -> ' + argv.js);
+					fs.appendFileSync(argv.js, processedScripts[script] + '\n');
 				}
 			}
 		});
 	}
 
-	console.log(getTagAttrs(dom, 'link', 'href'));
+	//process css
+	let styles = getTagAttrs(dom, 'link', 'href');
+	let processedStyles = {};
+	fs.writeFileSync(argv.css, '');
+	for (let i = 0; i < styles.length; i++) {
+		let style = styles[i];
+
+		let css = fs.readFileSync(style);
+
+		console.log(style + ' -> ' + argv.css);
+		fs.appendFileSync(argv.css, (new CleanCSS().minify(css)).styles + '\n');
+	}
 });
