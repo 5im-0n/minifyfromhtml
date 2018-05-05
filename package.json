@@ -11,6 +11,8 @@
   "dependencies": {
     "babel-cli": "^6.26.0",
     "babel-preset-minify": "^0.4.1",
-    "clean-css-cli": "^4.1.11"
+    "clean-css-cli": "^4.1.11",
+    "jsdom": "^11.10.0",
+    "minimist": "^1.2.0"
   }
 }
