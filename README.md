@@ -6,3 +6,8 @@ It takes an input html file, parses it, and outputs all included javascript and 
 ```
 minifyfromhtml --js=<output js file> --css=<output css file> < <input file>
 ```
+
+example:
+```
+minifyfromhtml --js=dist/mywidget.min.js --css=dist/mywidget.min.css < example/index.html
+```
