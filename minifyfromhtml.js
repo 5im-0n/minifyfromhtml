@@ -1,4 +1,5 @@
 let argv = require('minimist')(process.argv.slice(2));
+var fs = require('fs');
 let jsdom = require('jsdom');
 let JSDOM = jsdom.JSDOM;
 let babel = require("babel-core");
@@ -13,17 +14,17 @@ let usage = `usage:
 	minifyfromhtml -o dist < example/index.html
 `;
 
-let inputFile = argv.i;
+let outputDir = argv.o;
 
 if (argv.h) {
 	console.log(usage);
+	return;
 }
 
-let execute = function(command, callback) {
-	exec(command, function(error, stdout, stderr) {
-		callback(stdout);
-	});
-};
+if (!argv.o) {
+	console.log(usage);
+	return;
+}
 
 let readStdin = function(cb) {
 	let stdin = '';
@@ -54,6 +55,7 @@ readStdin(function(html) {
 		return scripts;
 	}
 
+	//process scripts
 	let scripts = getTagAttrs(dom, 'script', 'src');
 	let processedScripts = {};
 	for (let i = 0; i < scripts.length; i++) {
@@ -65,6 +67,20 @@ readStdin(function(html) {
 				return;
 			}
 			processedScripts[script] = result.code;
+
+			if (Object.keys(processedScripts).length === scripts.length) {
+				//write scripts
+
+				//clear out dist file
+				fs.writeFileSync(outputDir + '/dist.js', '');
+
+				//write files
+				for (let i = 0; i < scripts.length; i++) {
+					const script = scripts[i];
+
+					fs.appendFileSync(outputDir + '/dist.js', processedScripts[script] + '\n');
+				}
+			}
 		});
 	}
 
