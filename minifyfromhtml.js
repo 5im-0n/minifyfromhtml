@@ -99,8 +99,16 @@ readStdin(function(html) {
 		let style = styles[i];
 
 		let css = fs.readFileSync(style);
+		let cleanCssOptions = {
+			level: {
+				1: {
+					specialComments: false,
+					rebase: false
+				}
+			}
+		};
 
 		console.log(style + ' -> ' + argv.css);
-		fs.appendFileSync(argv.css, (new CleanCSS().minify(css)).styles + '\n');
+		fs.appendFileSync(argv.css, (new CleanCSS(cleanCssOptions).minify(css)).styles + '\n');
 	}
 });
