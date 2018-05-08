@@ -1,6 +1,6 @@
 {
   "name": "minifyfromhtml",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "minify scripts and css starting from an html file",
   "main": "minifyfromhtml.js",
   "scripts": {
@@ -16,5 +16,12 @@
     "clean-css": "^4.1.11",
     "jsdom": "^11.10.0",
     "minimist": "^1.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/S2-/minifyfromhtml.git"
+  },
+  "bin": {
+    "minifyfromhtml": "./minifyfromhtml.js"
   }
 }
