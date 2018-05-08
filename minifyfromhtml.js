@@ -7,7 +7,7 @@ let babel = require("babel-core");
 let CleanCSS = require('clean-css');
 
 let usage = `usage:
-	minifyfromhtml --js=<output js file> --css=<output css file> < <input file>
+	minifyfromhtml --js=<output js file> --css=<output css file> --exclude=<exclude files> < <input file>
 
 	the minification process uses babel under the hood, so you can modify
 	the minification with a .babelrc file.
@@ -18,10 +18,8 @@ let usage = `usage:
 	https://github.com/jakubpawlowicz/clean-css
 
 	example:
-	minifyfromhtml --js=dist/mywidget.min.js --css=dist/mywidget.min.css < example/index.html
+	minifyfromhtml --js=dist/mywidget.min.js --css=dist/mywidget.min.css --exclude=js/jquery.js < example/index.html
 `;
-
-let outputDir = argv.o;
 
 if (argv.h) {
 	console.log(usage);
@@ -31,6 +29,11 @@ if (argv.h) {
 if (!argv.js || !argv.css) {
 	console.log(usage);
 	return;
+}
+
+var excludeFiles = argv.exclude || [];
+if (typeof(excludeFiles) === 'string') {
+	excludeFiles = [excludeFiles];
 }
 
 let readStdin = function(cb) {
@@ -64,6 +67,15 @@ readStdin(function(html) {
 
 	//process scripts
 	let scripts = getTagAttrs(dom, 'script', 'src');
+
+	//remove exluded
+	excludeFiles.forEach(i => {
+		var index = scripts.indexOf(i);
+		if (index !== -1) {
+			scripts.splice(index, 1);
+		}
+	});
+
 	let processedScripts = {};
 	for (let i = 0; i < scripts.length; i++) {
 		let script = scripts[i];
@@ -94,10 +106,24 @@ readStdin(function(html) {
 
 	//process css
 	let styles = getTagAttrs(dom, 'link', 'href');
+
+	//remove exluded
+	excludeFiles.forEach(i => {
+		var index = styles.indexOf(i);
+		if (index !== -1) {
+			styles.splice(index, 1);
+		}
+	});
+
 	let processedStyles = {};
 	fs.writeFileSync(argv.css, '');
 	for (let i = 0; i < styles.length; i++) {
 		let style = styles[i];
+
+		if (excludeFiles.indexOf(style) > -1) {
+			console.log(style + ' excluded');
+			continue;
+		}
 
 		let css = fs.readFileSync(style);
 		let cleanCssOptions = '';
