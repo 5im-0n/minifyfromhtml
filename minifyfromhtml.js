@@ -1,5 +1,6 @@
 let argv = require('minimist')(process.argv.slice(2));
-var fs = require('fs');
+let fs = require('fs');
+let path = require('path');
 let jsdom = require('jsdom');
 let JSDOM = jsdom.JSDOM;
 let babel = require("babel-core");
@@ -12,8 +13,8 @@ let usage = `usage:
 	the minification with a .babelrc file.
 	https://babeljs.io/
 
-	the css minification process uses clean-css, so you can modify
-	the minification with
+	the css minification process uses clean-css. to modify the default settings,
+	create a file named .cleancssrc and put the json configuration in that file.
 	https://github.com/jakubpawlowicz/clean-css
 
 	example:
@@ -99,14 +100,21 @@ readStdin(function(html) {
 		let style = styles[i];
 
 		let css = fs.readFileSync(style);
-		let cleanCssOptions = {
-			level: {
-				1: {
-					specialComments: false,
-					rebase: false
+		let cleanCssOptions = '';
+
+		let readConfig = function(configfilepath) {
+			try {
+				return JSON.parse(fs.readFileSync(configfilepath + '/.cleancssrc'));
+			} catch (e) {
+				if (configfilepath != __dirname) {
+					configfilepath = path.resolve(path.normalize(configfilepath + '/../'));
+					return readConfig(configfilepath);
+				} else {
+					return {};
 				}
 			}
-		};
+		}
+		cleanCssOptions = readConfig(path.resolve('./'));
 
 		console.log(style + ' -> ' + argv.css);
 		fs.appendFileSync(argv.css, (new CleanCSS(cleanCssOptions).minify(css)).styles + '\n');
