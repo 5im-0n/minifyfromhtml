@@ -132,7 +132,7 @@ readStdin(function(html) {
 			try {
 				return JSON.parse(fs.readFileSync(configfilepath + '/.cleancssrc'));
 			} catch (e) {
-				if (configfilepath != __dirname) {
+				if (configfilepath.length < 4) {
 					configfilepath = path.resolve(path.normalize(configfilepath + '/../'));
 					return readConfig(configfilepath);
 				} else {
