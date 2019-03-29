@@ -4,7 +4,6 @@ let path = require('path');
 let jsdom = require('jsdom');
 let JSDOM = jsdom.JSDOM;
 let babel = require("babel-core");
-let babelMinify = require('babel-minify');
 let CleanCSS = require('clean-css');
 
 let usage = `usage:
@@ -80,9 +79,6 @@ readStdin(function(html) {
 	let processedScripts = {};
 	for (let i = 0; i < scripts.length; i++) {
 		let script = scripts[i];
-
-		console.log(babel);
-
 
 		babel.transformFile(script, {}, function(err, result) {
 			if (err) {
