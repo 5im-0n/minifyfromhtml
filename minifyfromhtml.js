@@ -112,11 +112,6 @@ readStdin(function(html) {
 	for (let i = 0; i < styles.length; i++) {
 		let style = styles[i];
 
-		if (excludeFiles.indexOf(style) > -1) {
-			console.log(style + ' excluded');
-			continue;
-		}
-
 		minify(style, 'stream')
 		.then(function(data) {
 			processedStyles[style] = data;
