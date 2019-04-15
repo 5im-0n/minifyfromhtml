@@ -17,15 +17,15 @@ let usage = `usage:
 
 if (argv.h) {
 	console.log(usage);
-	return;
+	process.exit(0);
 }
 
 if (!argv.js || !argv.css) {
 	console.log(usage);
-	return;
+	process.exit(0);
 }
 
-var excludeFiles = argv.exclude || [];
+let excludeFiles = argv.exclude || [];
 if (typeof(excludeFiles) === 'string') {
 	excludeFiles = [excludeFiles];
 }
@@ -40,7 +40,8 @@ let readStdin = function(cb) {
 	process.stdin.on('end', function() {
 		cb(stdin);
 	});
-}
+};
+
 
 readStdin(function(html) {
 	let dom = new JSDOM(html);
@@ -57,79 +58,49 @@ readStdin(function(html) {
 			}
 		}
 		return scripts;
-	}
+	};
 
-	//process scripts
-	let scripts = getTagAttrs(dom, 'script', 'src');
 
-	//remove exluded
-	excludeFiles.forEach(i => {
-		var index = scripts.indexOf(i);
-		if (index !== -1) {
-			scripts.splice(index, 1);
-		}
-	});
-
-	let processedScripts = {};
-	for (let i = 0; i < scripts.length; i++) {
-		let script = scripts[i];
-
-		minify(script, 'stream')
-		.then(function(data) {
-			processedScripts[script] = data;
-
-			if (Object.keys(processedScripts).length === scripts.length) {
-				//write scripts
-
-				//clear out dist file
-				fs.writeFileSync(argv.js, '');
-
-				//write files
-				for (let i = 0; i < scripts.length; i++) {
-					const script = scripts[i];
-
-					console.log(script + ' -> ' + argv.js);
-					fs.appendFileSync(argv.js, processedScripts[script] + '\n');
-				}
+	let processThings = function(things, outFile) {
+		//remove exluded
+		excludeFiles.forEach(i => {
+			let index = things.indexOf(i);
+			if (index !== -1) {
+				things.splice(index, 1);
 			}
 		});
+
+		let processedThings = {};
+		for (let i = 0; i < things.length; i++) {
+			let thing = things[i];
+
+			minify(thing)
+			.then(function(data) {
+				processedThings[thing] = data;
+
+				if (Object.keys(processedThings).length === things.length) {
+					//write things
+
+					//clear out dist file
+					fs.writeFileSync(outFile, '');
+
+					//write files
+					for (let i = 0; i < things.length; i++) {
+						const thing = things[i];
+
+						console.log(thing + ' -> ' + outFile);
+						fs.appendFileSync(outFile, processedThings[thing] + '\n');
+					}
+				}
+			});
+		}
+	};
+
+	if (argv.js) {
+		processThings(getTagAttrs(dom, 'script', 'src'), argv.js);
 	}
 
-
-	//process css
-	let styles = getTagAttrs(dom, 'link', 'href');
-
-	//remove exluded
-	excludeFiles.forEach(i => {
-		var index = styles.indexOf(i);
-		if (index !== -1) {
-			styles.splice(index, 1);
-		}
-	});
-
-	let processedStyles = {};
-	fs.writeFileSync(argv.css, '');
-	for (let i = 0; i < styles.length; i++) {
-		let style = styles[i];
-
-		minify(style, 'stream')
-		.then(function(data) {
-			processedStyles[style] = data;
-
-			if (Object.keys(processedStyles).length === styles.length) {
-				//write styles
-
-				//clear out dist file
-				fs.writeFileSync(argv.css, '');
-
-				//write files
-				for (let i = 0; i < styles.length; i++) {
-					const style = styles[i];
-
-					console.log(style + ' -> ' + argv.css);
-					fs.appendFileSync(argv.css, processedStyles[style] + '\n');
-				}
-			}
-		});
+	if (argv.css) {
+		processThings(getTagAttrs(dom, 'link', 'href'), argv.css);
 	}
 });
