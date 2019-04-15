@@ -3,19 +3,13 @@ let fs = require('fs');
 let path = require('path');
 let jsdom = require('jsdom');
 let JSDOM = jsdom.JSDOM;
-let babel = require("babel-core");
-let CleanCSS = require('clean-css');
+let minify = require('minify');
 
 let usage = `usage:
 	minifyfromhtml --js=<output js file> --css=<output css file> --exclude=<exclude files> < <input file>
 
-	the minification process uses babel under the hood, so you can modify
-	the minification with a .babelrc file.
-	https://babeljs.io/
-
-	the css minification process uses clean-css. to modify the default settings,
-	create a file named .cleancssrc and put the json configuration in that file.
-	https://github.com/jakubpawlowicz/clean-css
+	the minification process uses minify under the hood.
+	http://coderaiser.github.io/minify/
 
 	example:
 	minifyfromhtml --js=dist/mywidget.min.js --css=dist/mywidget.min.css --exclude=js/jquery.js < example/index.html
@@ -30,6 +24,16 @@ if (!argv.js || !argv.css) {
 	console.log(usage);
 	return;
 }
+
+function streamToString(stream) {
+	const chunks = []
+	return new Promise((resolve, reject) => {
+		stream.on('data', chunk => chunks.push(chunk))
+		stream.on('error', reject)
+		stream.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')))
+	})
+}
+
 
 var excludeFiles = argv.exclude || [];
 if (typeof(excludeFiles) === 'string') {
@@ -80,12 +84,9 @@ readStdin(function(html) {
 	for (let i = 0; i < scripts.length; i++) {
 		let script = scripts[i];
 
-		babel.transformFile(script, {}, function(err, result) {
-			if (err) {
-				console.error(err);
-				return;
-			}
-			processedScripts[script] = result.code;
+		minify(script, 'stream')
+		.then(function(data) {
+			processedScripts[script] = data;
 
 			if (Object.keys(processedScripts).length === scripts.length) {
 				//write scripts
@@ -103,6 +104,7 @@ readStdin(function(html) {
 			}
 		});
 	}
+
 
 	//process css
 	let styles = getTagAttrs(dom, 'link', 'href');
@@ -125,24 +127,24 @@ readStdin(function(html) {
 			continue;
 		}
 
-		let css = fs.readFileSync(style);
-		let cleanCssOptions = '';
+		minify(style, 'stream')
+		.then(function(data) {
+			processedStyles[style] = data;
 
-		let readConfig = function(configfilepath) {
-			try {
-				return JSON.parse(fs.readFileSync(configfilepath + '/.cleancssrc'));
-			} catch (e) {
-				if (configfilepath.length < 4) {
-					configfilepath = path.resolve(path.normalize(configfilepath + '/../'));
-					return readConfig(configfilepath);
-				} else {
-					return {};
+			if (Object.keys(processedStyles).length === styles.length) {
+				//write styles
+
+				//clear out dist file
+				fs.writeFileSync(argv.css, '');
+
+				//write files
+				for (let i = 0; i < styles.length; i++) {
+					const style = styles[i];
+
+					console.log(style + ' -> ' + argv.css);
+					fs.appendFileSync(argv.css, processedStyles[style] + '\n');
 				}
 			}
-		}
-		cleanCssOptions = readConfig(path.resolve('./'));
-
-		console.log(style + ' -> ' + argv.css);
-		fs.appendFileSync(argv.css, (new CleanCSS(cleanCssOptions).minify(css)).styles + '\n');
+		});
 	}
 });
