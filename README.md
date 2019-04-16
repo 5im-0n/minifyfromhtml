@@ -67,7 +67,11 @@ minifyfromhtml --js=dist.js --css=dist.css < index.html
 ```
 =>
 ```
-css/mywidget.css -> dist.css
-js/jquery.js -> dist.js
-js/spectacularwidget.js -> dist.js
+some.css -> dist.css
+app.css -> dist.css
+somelib.js -> dist.js
+someotherlib.js -> dist.js
+awesomelib.js -> dist.js
+spectacularlib.js -> dist.js
+app.js -> dist.js
 ```
