@@ -19,5 +19,6 @@
   },
   "bin": {
     "minifyfromhtml": "./minifyfromhtml.js"
-  }
+  },
+  "keywords": ["minify", "javascript", "html", "css", "script"]
 }
