@@ -52,7 +52,8 @@ readStdin(function(html) {
 		let elementTags = document.getElementsByTagName(tag);
 		let i = elementTags.length;
 		for (let i = 0; i < elementTags.length; i++) {
-			if (filter && elementTags[i].getAttribute(Object.keys(filter)[0]).includes(filter[Object.keys(filter)[0]])) {
+			if (!filter ||
+				(filter && elementTags[i].getAttribute(Object.keys(filter)[0]) === filter[Object.keys(filter)[0]])) {
 				let src = elementTags[i].getAttribute(attr);
 				if (src) {
 					elements.push(src);
