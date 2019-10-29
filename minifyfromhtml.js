@@ -45,19 +45,21 @@ let readStdin = function(cb) {
 
 readStdin(function(html) {
 	let dom = new JSDOM(html);
-	let getTagAttrs = function(dom, tag, attr) {
-		let scripts = [];
+	let getTagAttrs = function(dom, tag, attr, filter) {
+		let elements = [];
 
 		let document = dom.window.document;
-		let scriptTags = document.getElementsByTagName(tag);
-		let i = scriptTags.length;
-		for (let i = 0; i < scriptTags.length; i++) {
-			let src = scriptTags[i].getAttribute(attr);
-			if (src) {
-				scripts.push(src);
+		let elementTags = document.getElementsByTagName(tag);
+		let i = elementTags.length;
+		for (let i = 0; i < elementTags.length; i++) {
+			if (filter && elementTags[i].getAttribute(Object.keys(filter)[0]).includes(filter[Object.keys(filter)[0]])) {
+				let src = elementTags[i].getAttribute(attr);
+				if (src) {
+					elements.push(src);
+				}
 			}
 		}
-		return scripts;
+		return elements;
 	};
 
 
@@ -101,6 +103,6 @@ readStdin(function(html) {
 	}
 
 	if (argv.css) {
-		processThings(getTagAttrs(dom, 'link', 'href'), argv.css);
+		processThings(getTagAttrs(dom, 'link', 'href', {rel: 'stylesheet'}), argv.css);
 	}
 });
