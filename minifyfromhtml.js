@@ -20,7 +20,7 @@ if (argv.h) {
 	process.exit(0);
 }
 
-if (!argv.js || !argv.css) {
+if (!argv.js && !argv.css) {
 	console.log(usage);
 	process.exit(0);
 }
