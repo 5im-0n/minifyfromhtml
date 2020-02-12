@@ -5,6 +5,8 @@ let jsdom = require('jsdom');
 let JSDOM = jsdom.JSDOM;
 let minify = require('minify');
 
+process.on('unhandledRejection', up => { throw up; });
+
 let usage = `usage:
 	minifyfromhtml --js=<output js file> --css=<output css file> --exclude=<exclude files> < <input file>
 
