@@ -1,5 +1,6 @@
 let argv = require('minimist')(process.argv.slice(2));
 let fs = require('fs');
+let path = require('path');
 let Terser = require('terser');
 let CleanCSS = require('clean-css');
 let jsdom = require('jsdom');
@@ -71,8 +72,8 @@ readStdin(function(html) {
 				comments: false
 			},
 			sourceMap: {
-				filename: argv.js,
-				url: argv.js + '.map'
+				includeSources: true,
+				url: path.basename(outFile) + '.map'
 			}
 		};
 
