@@ -1,9 +1,9 @@
 let argv = require('minimist')(process.argv.slice(2));
 let fs = require('fs');
-let path = require('path');
+let Terser = require('terser');
+let CleanCSS = require('clean-css');
 let jsdom = require('jsdom');
 let JSDOM = jsdom.JSDOM;
-let minify = require('minify');
 
 process.on('unhandledRejection', up => { throw up; });
 
@@ -65,8 +65,17 @@ readStdin(function(html) {
 		return elements;
 	};
 
+	let processJs = function(things, outFile) {
+		let terserOptions = {
+			output: {
+				comments: false
+			},
+			sourceMap: {
+				filename: argv.js,
+				url: argv.js + '.map'
+			}
+		};
 
-	let processThings = function(things, outFile) {
 		//remove exluded
 		excludeFiles.forEach(i => {
 			let index = things.indexOf(i);
@@ -75,37 +84,35 @@ readStdin(function(html) {
 			}
 		});
 
-		let processedThings = {};
+		let code = {};
 		for (let i = 0; i < things.length; i++) {
 			let thing = things[i];
+			code[thing] = fs.readFileSync(thing, 'utf8');
+			console.log(thing + ' -> ' + outFile);
+		}
 
-			minify(thing)
-			.then(function(data) {
-				processedThings[thing] = data;
+		const data = Terser.minify(code, terserOptions);
+		fs.writeFileSync(outFile, data.code);
+		if (data.map) {
+			fs.writeFileSync(outFile + '.map', data.map);
+		}
+	};
 
-				if (Object.keys(processedThings).length === things.length) {
-					//write things
-
-					//clear out dist file
-					fs.writeFileSync(outFile, '');
-
-					//write files
-					for (let i = 0; i < things.length; i++) {
-						const thing = things[i];
-
-						console.log(thing + ' -> ' + outFile);
-						fs.appendFileSync(outFile, processedThings[thing] + '\n');
-					}
-				}
-			});
+	let processCss = function(things, outFile) {
+		fs.writeFileSync(outFile, '');
+		for (let i = 0; i < things.length; i++) {
+			let thing = things[i];
+			console.log(thing + ' -> ' + outFile);
+			let minified = new CleanCSS().minify(fs.readFileSync(thing, 'utf8'));
+			fs.appendFileSync(outFile, minified.styles);
 		}
 	};
 
 	if (argv.js) {
-		processThings(getTagAttrs(dom, 'script', 'src'), argv.js);
+		processJs(getTagAttrs(dom, 'script', 'src'), argv.js);
 	}
 
 	if (argv.css) {
-		processThings(getTagAttrs(dom, 'link', 'href', {rel: 'stylesheet'}), argv.css);
+		processCss(getTagAttrs(dom, 'link', 'href', {rel: 'stylesheet'}), argv.css);
 	}
 });
