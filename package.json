@@ -1,6 +1,6 @@
 {
   "name": "minifyfromhtml",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "minify scripts and css starting from an html file",
   "main": "minifyfromhtml.js",
   "scripts": {
