@@ -92,11 +92,13 @@ readStdin(function(html) {
 			console.log(thing + ' -> ' + outFile);
 		}
 
-		const data = Terser.minify(code, terserOptions);
-		fs.writeFileSync(outFile, data.code);
-		if (data.map) {
-			fs.writeFileSync(outFile + '.map', data.map);
-		}
+		const datap = Terser.minify(code, terserOptions);
+		datap.then((data) => {
+			fs.writeFileSync(outFile, data.code);
+			if (data.map) {
+				fs.writeFileSync(outFile + '.map', data.map);
+			}
+		});
 	};
 
 	let processCss = function(things, outFile) {
