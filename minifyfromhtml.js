@@ -46,7 +46,7 @@ let readStdin = function(cb) {
 };
 
 
-readStdin(function(html) {
+readStdin(async function(html) {
 	let dom = new JSDOM(html);
 	let getTagAttrs = function(dom, tag, attr, filter) {
 		let elements = [];
@@ -66,7 +66,7 @@ readStdin(function(html) {
 		return elements;
 	};
 
-	let processJs = function(things, outFile) {
+	let processJs = async function(things, outFile) {
 		let terserOptions = {
 			output: {
 				comments: false
@@ -92,13 +92,20 @@ readStdin(function(html) {
 			console.log(thing + ' -> ' + outFile);
 		}
 
-		const datap = Terser.minify(code, terserOptions);
-		datap.then((data) => {
-			fs.writeFileSync(outFile, data.code);
-			if (data.map) {
-				fs.writeFileSync(outFile + '.map', data.map);
+		let datap = await Terser.minify(code, terserOptions);
+		if (datap.error) {
+			console.log('Minify error, falling back to concatenation:', datap.error.message);
+			let raw = '';
+			for (let thing of things) {
+				raw += fs.readFileSync(thing, 'utf8') + '\n';
 			}
-		});
+			fs.writeFileSync(outFile, raw);
+		} else {
+			fs.writeFileSync(outFile, datap.code);
+			if (datap.map) {
+				fs.writeFileSync(outFile + '.map', datap.map);
+			}
+		}
 	};
 
 	let processCss = function(things, outFile) {
